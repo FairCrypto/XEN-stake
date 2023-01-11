@@ -1,10 +1,11 @@
 const XENStake = artifacts.require("XENStake");
 const XENCrypto = artifacts.require("XENCrypto");
-//const DateTime = artifacts.require("DateTime");
-//const StringData = artifacts.require("StringData");
-//const MintInfo = artifacts.require("MintInfo");
-//const Metadata = artifacts.require("Metadata");
-//const TestBulkMinter = artifacts.require("TestBulkMinter");
+const MagicNumbers = artifacts.require("MagicNumbers");
+
+const DateTime = artifacts.require("DateTime");
+// const StringData = artifacts.require("StringData");
+const StakeInfo = artifacts.require("StakeInfo");
+const StakeMetadata = artifacts.require("StakeMetadata");
 
 require("dotenv").config();
 
@@ -12,18 +13,21 @@ module.exports = async function (deployer, network) {
 
     const xenContractAddress = process.env[`${network.toUpperCase()}_CONTRACT_ADDRESS`];
 
-    //await deployer.deploy(DateTime);
-    //await deployer.link(DateTime, Metadata);
+    await deployer.deploy(DateTime);
+    await deployer.link(DateTime, StakeMetadata);
 
     //await deployer.deploy(StringData);
     //await deployer.link(StringData, Metadata);
 
-    //await deployer.deploy(MintInfo);
-    //await deployer.link(MintInfo, Metadata);
-    //await deployer.link(MintInfo, XENTorrent);
+    await deployer.deploy(StakeInfo);
+    await deployer.link(StakeInfo, StakeMetadata);
+    await deployer.link(StakeInfo, XENStake);
 
-    //await deployer.deploy(Metadata);
-    //await deployer.link(Metadata, XENTorrent);
+    await deployer.deploy(StakeMetadata);
+    await deployer.link(StakeMetadata, XENStake);
+
+    await deployer.deploy(MagicNumbers);
+    await deployer.link(MagicNumbers, XENStake);
 
     const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
     const startBlock = process.env[`${network.toUpperCase()}_START_BLOCK`] || 0;

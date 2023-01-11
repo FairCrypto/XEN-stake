@@ -7,12 +7,12 @@ import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@faircrypto/xen-crypto/contracts/XENCrypto.sol";
 import "@faircrypto/xen-crypto/contracts/interfaces/IBurnableToken.sol";
-// import "@faircrypto/xen-crypto/contracts/interfaces/IBurnRedeemable.sol";
+import "@faircrypto/magic-numbers/contracts/MagicNumbers.sol";
 import "operator-filter-registry/src/DefaultOperatorFilterer.sol";
 import "./libs/ERC2771Context.sol";
 import "./interfaces/IERC2771.sol";
-//import "./libs/MintInfo.sol";
-//import "./libs/Metadata.sol";
+import "./libs/StakeInfo.sol";
+import "./libs/StakeMetadata.sol";
 import "./libs/Array.sol";
 import "./interfaces/IXENStake.sol";
 import "./interfaces/IXENStakeProxying.sol";
@@ -45,7 +45,8 @@ contract XENStake is
 {
 
     using Strings for uint256;
-    // using MintInfo for uint256;
+    using StakeInfo for uint256;
+    using MagicNumbers for uint256;
     using Array for uint256[];
 
     // PUBLIC CONSTANTS
@@ -149,6 +150,7 @@ contract XENStake is
         @dev compliance with ERC-721 standard (NFT); returns NFT metadata, including SVG-encoded image
      */
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        uint256 info = stakeInfo[tokenId];
 
         bytes memory dataURI = abi.encodePacked(
             "{",
@@ -158,14 +160,10 @@ contract XENStake is
             '"description": "XENFT: XEN Crypto Proof Of Stake",',
             '"image": "',
             "data:image/svg+xml;base64,",
-            // TODO: implement image !!!
-            Base64.encode("<svg></svg>"),
-            // Base64.encode(Metadata.svgData(tokenId, count, info, address(xenCrypto), burned)),
+            Base64.encode(StakeMetadata.svgData(tokenId, info, address(xenCrypto))),
             '",',
             '"attributes": ',
-            // TODO: implement props !!!
-            '[]',
-            // Metadata.attributes(count, burned, info),
+            StakeMetadata.attributes(info),
             "}"
         );
         return string(abi.encodePacked("data:application/json;base64,", Base64.encode(dataURI)));
@@ -224,8 +222,7 @@ contract XENStake is
         uint256 tokenId
     ) internal virtual override {
         if (from != address(0)) {
-            // TODO: implement stakeInfo
-            uint256 maturityTs = stakeInfo[tokenId];
+            uint256 maturityTs = StakeInfo.getMaturityTs(stakeInfo[tokenId]);
             uint256 delta = maturityTs > block.timestamp ? maturityTs - block.timestamp : block.timestamp - maturityTs;
             require(delta > BLACKOUT_TERM, "XENFT: transfer prohibited in blackout period");
         }
@@ -336,6 +333,34 @@ contract XENStake is
     // XEN TORRENT PRIVATE / INTERNAL HELPERS
 
     /**
+        @dev internal torrent interface. calculates rarityBits and rarityScore
+     */
+    function _calcRarity(uint256 tokenId) private view returns (uint256 rarityScore, uint256 rarityBits) {
+        bool isPrime = tokenId.isPrime();
+        bool isFib = tokenId.isFib();
+        bool blockIsPrime = block.number.isPrime();
+        bool blockIsFib = block.number.isFib();
+        rarityScore += (isPrime ? 500 : 0);
+        rarityScore += (blockIsPrime ? 1_000 : 0);
+        rarityScore += (isFib ? 5_000 : 0);
+        rarityScore += (blockIsFib ? 10_000 : 0);
+        rarityBits = StakeInfo.encodeRarityBits(isPrime, isFib, blockIsPrime, blockIsFib);
+    }
+
+    /**
+        @dev internal torrent interface. composes StakeInfo
+     */
+    function _stakeInfo(address proxy, uint256 tokenId, uint256 amount, uint256 term)
+        private
+        view
+        returns (uint256 info)
+    {
+        ( , uint256 maturityTs, , uint256 apy) = xenCrypto.userStakes(proxy);
+        (uint256 rarityScore, uint256 rarityBits) = _calcRarity(tokenId);
+        info = StakeInfo.encodeStakeInfo(term, maturityTs, amount/10**18, apy, rarityScore, rarityBits);
+    }
+
+    /**
         @dev internal torrent interface. initiates Stake Operation
      */
     function _createStake(uint256 amount, uint256 term, uint256 tokenId) private {
@@ -358,8 +383,7 @@ contract XENStake is
         }
         require(succeeded, "XENFT: Error while staking");
 
-        // TODO: implement stakeInfo
-        stakeInfo[tokenId] = block.timestamp + term * SECONDS_IN_DAY;
+        stakeInfo[tokenId] = _stakeInfo(proxy, tokenId, amount, term);
     }
 
     /**
@@ -377,6 +401,7 @@ contract XENStake is
         bytes32 salt = keccak256(abi.encodePacked(tokenId));
         bytes32 hash = keccak256(abi.encodePacked(hex"ff", address(this), salt, keccak256(bytecode)));
         address proxy = address(uint160(uint256(hash)));
+
         bool succeeded;
         assembly {
             succeeded := call(gas(), proxy, 0, add(callData, 0x20), mload(callData), 0, 0)
@@ -431,8 +456,8 @@ contract XENStake is
         // require(_tokenId == _NOT_USED, "XENFT: reentrancy detected");
         require(tokenId > 0, "XENFT: Illegal tokenId");
         require(ownerOf(tokenId) == _msgSender(), "XENFT: Incorrect owner");
-        // TODO: add maturityChecking !!!
-        require(block.timestamp > stakeInfo[tokenId], "XENFT: Maturity not reached");
+        uint256 maturityTs = StakeInfo.getMaturityTs(stakeInfo[tokenId]);
+        require(block.timestamp > maturityTs, "XENFT: Maturity not reached");
 
         _endStake(tokenId);
         _ownedTokens[_msgSender()].removeItem(tokenId);

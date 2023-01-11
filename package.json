@@ -41,6 +41,7 @@
     "**/*.(md|json)": "prettier --write"
   },
   "dependencies": {
+    "@faircrypto/magic-numbers": "^0.1.0",
     "@faircrypto/xen-crypto": "^0.3.2",
     "@openzeppelin/contracts": "4.7",
     "operator-filter-registry": "^1.3.1"

@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: MIT
 
 const assert = require('assert');
-// const { Contract } = require('ethers');
-// const { Web3Provider } = require('@ethersproject/providers');
+//const { Contract } = require('ethers');
+//const { Web3Provider } = require('@ethersproject/providers');
 const timeMachine = require('ganache-time-traveler');
 const {toBigInt} = require("../src/utils");
 
+const Numbers = artifacts.require("MagicNumbers");
 const XENCrypto = artifacts.require("XENCrypto");
 const XENStake = artifacts.require("XENStake");
 
 require('dotenv').config();
 
-// const extraPrint = process.env.EXTRA_PRINT;
+const extraPrint = process.env.EXTRA_PRINT;
 
 const ether = 10n ** 18n;
 
@@ -28,6 +29,7 @@ contract("XEN Stake", async accounts => {
     let token;
     let xenStake;
     let xenCryptoAddress;
+
     let xenBalance;
     let genesisTs = 0;
     let tokenId;
@@ -38,11 +40,13 @@ contract("XEN Stake", async accounts => {
     // const term2= 100;
     const amount = 1_000n * ether;
     const expectedXENBalance = 330_000n * ether;
+    // const provider = new Web3Provider(web3.currentProvider);
 
     before(async () => {
         try {
             token = await XENCrypto.deployed();
             xenStake = await XENStake.deployed();
+
             currentBlock = await web3.eth.getBlockNumber();
             xenCryptoAddress = token.address;
         } catch (e) {
@@ -110,11 +114,40 @@ contract("XEN Stake", async accounts => {
         assert.ok(xenBalance > amount)
         await assert.doesNotReject(() => token.approve(xenStake.address, amount, { from: accounts[1] }));
         const res = await xenStake.createStake(amount, term, { from: accounts[1] });
+        const { gasUsed } = res.receipt;
         const { tokenId: newTokenId, amount: expectedAmount, term: expectedTerm } = res.logs[1].args;
+        parseInt(extraPrint || '0') > 0 && console.log('tokenId', newTokenId.toNumber(), 'gas used', gasUsed);
         assert.ok(newTokenId.toNumber() === 1);
         assert.ok(BigInt(expectedAmount.toString()) === amount);
         assert.ok(expectedTerm.toNumber() === term);
-        tokenId = newTokenId;
+        tokenId = newTokenId.toNumber();
+    })
+
+    it("Should be able to return tokenURI as base-64 encoded data URL", async () => {
+        const encodedStr = await xenStake.tokenURI(tokenId)
+        assert.ok(encodedStr.startsWith('data:application/json;base64,'));
+        const base64str = encodedStr.replace('data:application/json;base64,', '');
+        const decodedStr = Buffer.from(base64str, 'base64').toString('utf8');
+        extraPrint === '3' && console.log(decodedStr)
+        const metadata = JSON.parse(decodedStr.replace(/\n/, ''));
+        assert.ok('name' in metadata);
+        assert.ok('description' in metadata);
+        assert.ok('image' in metadata);
+        assert.ok('attributes' in metadata);
+        assert.ok(Array.isArray(metadata.attributes));
+        assertAttribute(metadata.attributes)('Amount', (amount / ether).toString());
+        assertAttribute(metadata.attributes)('Term', term.toString());
+        assertAttribute(metadata.attributes)('APY');
+        assertAttribute(metadata.attributes)('Maturity DateTime');
+        assertAttribute(metadata.attributes)('Maturity Year');
+        assertAttribute(metadata.attributes)('Maturity Month');
+        assertAttribute(metadata.attributes)('Rarity');
+        assert.ok(metadata.image.startsWith('data:image/svg+xml;base64,'));
+        const imageBase64 = metadata.image.replace('data:image/svg+xml;base64,', '');
+        const decodedImage = Buffer.from(imageBase64, 'base64').toString();
+        assert.ok(decodedImage.startsWith('<svg'));
+        assert.ok(decodedImage.endsWith('</svg>'));
+        extraPrint === '2' && console.log(decodedImage);
     })
 
     it("Should reject to perform endStake operation before maturityDate", async () => {
@@ -127,13 +160,21 @@ contract("XEN Stake", async accounts => {
     it("Should allow to perform endStake operation after maturityDate", async () => {
        await timeMachine.advanceTime(term * 24 * 3600 + 24 * 3600 + 3600);
        await timeMachine.advanceBlock();
-        await assert.doesNotReject(() => xenStake.endStake(tokenId, { from: accounts[1] }));
+        await assert.doesNotReject(async () => {
+            const res = await xenStake.endStake(tokenId, { from: accounts[1] })
+            const { gasUsed } = res.receipt;
+            parseInt(extraPrint || '0') > 0 && console.log('tokenId redeemed', tokenId, 'gas used', gasUsed);
+        });
        // console.log(res);
    })
 
     it("Post stake, XEN Crypto user shall have XEN balance increased by APY rewards", async () => {
         const newBalance = await token.balanceOf(accounts[1], { from: accounts[1] }).then(toBigInt);
         assert.ok(newBalance === xenBalance + amount * 19n / 100n );
+    });
+
+    it("Should access deployed MagicNumbers library", async () => {
+        assert.ok(Numbers.deployed());
     });
 
 })

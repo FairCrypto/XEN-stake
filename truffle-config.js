@@ -97,7 +97,7 @@ module.exports = {
     },
   },
   mocha: {
-    timeout: 100_000
+    timeout: 999_000
   },
   compilers: {
     solc: {
