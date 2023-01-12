@@ -30,11 +30,10 @@ module.exports = async function (deployer, network) {
     await deployer.link(MagicNumbers, XENStake);
 
     const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-    const startBlock = process.env[`${network.toUpperCase()}_START_BLOCK`] || 0;
+    // const startBlock = process.env[`${network.toUpperCase()}_START_BLOCK`] || 0;
     const forwarder = process.env[`${network.toUpperCase()}_FORWARDER`] || ZERO_ADDRESS;
     const royaltyReceiver = process.env[`${network.toUpperCase()}_ROYALTY_RECEIVER`] || ZERO_ADDRESS;
 
-    console.log('    start block:', startBlock);
     console.log('    forwarder:', forwarder);
     console.log('    royalty receiver:', royaltyReceiver);
 

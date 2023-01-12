@@ -1,6 +1,5 @@
 {
   "name": "@faircrypto/xen-stake",
-  "private": true,
   "version": "0.1.0",
   "description": "XEN Proof-of-Stake XENFT",
   "main": "truffle-config.js",
