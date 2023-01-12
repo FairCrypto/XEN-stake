@@ -47,17 +47,12 @@ library StakeInfo {
     /**
         @dev decodes StakeInfo record and extracts all of its props
      */
-    function decodeStakeInfo(uint256 info)
+    function decodeStakeInfo(
+        uint256 info
+    )
         public
         pure
-        returns (
-            uint256 term,
-            uint256 maturityTs,
-            uint256 amount,
-            uint256 apy,
-            uint256 rarityScore,
-            uint256 rarityBits
-        )
+        returns (uint256 term, uint256 maturityTs, uint256 amount, uint256 apy, uint256 rarityScore, uint256 rarityBits)
     {
         term = uint16(info >> 240);
         maturityTs = uint64(info >> 176);
@@ -105,19 +100,16 @@ library StakeInfo {
     /**
         @dev extracts `rarityBits` prop from encoded StakeInfo
      */
-    function getRarityBits(uint256 info) public pure returns (uint256 rarityBits)
-    {
+    function getRarityBits(uint256 info) public pure returns (uint256 rarityBits) {
         (, , , , , rarityBits) = decodeStakeInfo(info);
     }
 
     /**
         @dev decodes boolean flags from `rarityBits` prop
      */
-    function decodeRarityBits(uint256 rarityBits)
-        public
-        pure
-        returns (bool isPrime, bool isFib, bool blockIsPrime, bool blockIsFib)
-    {
+    function decodeRarityBits(
+        uint256 rarityBits
+    ) public pure returns (bool isPrime, bool isFib, bool blockIsPrime, bool blockIsFib) {
         isPrime = rarityBits & 0x0008 > 0;
         isFib = rarityBits & 0x0004 > 0;
         blockIsPrime = rarityBits & 0x0002 > 0;
@@ -127,11 +119,12 @@ library StakeInfo {
     /**
         @dev encodes boolean flags to `rarityBits` prop
      */
-    function encodeRarityBits(bool isPrime, bool isFib, bool blockIsPrime, bool blockIsFib)
-        public
-        pure
-        returns (uint256 rarityBits)
-    {
+    function encodeRarityBits(
+        bool isPrime,
+        bool isFib,
+        bool blockIsPrime,
+        bool blockIsFib
+    ) public pure returns (uint256 rarityBits) {
         rarityBits = rarityBits | ((toU256(isPrime) << 3) & 0xFFFF);
         rarityBits = rarityBits | ((toU256(isFib) << 2) & 0xFFFF);
         rarityBits = rarityBits | ((toU256(blockIsPrime) << 1) & 0xFFFF);
@@ -141,11 +134,9 @@ library StakeInfo {
     /**
         @dev extracts `rarityBits` prop from encoded StakeInfo
      */
-    function getRarityBitsDecoded(uint256 info)
-        public
-        pure
-        returns (bool isPrime, bool isFib, bool blockIsPrime, bool blockIsFib)
-    {
+    function getRarityBitsDecoded(
+        uint256 info
+    ) public pure returns (bool isPrime, bool isFib, bool blockIsPrime, bool blockIsFib) {
         (, , , , , uint256 rarityBits) = decodeStakeInfo(info);
         (isPrime, isFib, blockIsPrime, blockIsFib) = decodeRarityBits(rarityBits);
     }

@@ -24,21 +24,13 @@ library StakeMetadata {
     /**
         @dev private helper to generate SVG gradients
      */
-    function _commonCategoryGradients()
-        private
-        pure
-        returns (StakeSVG.Gradient[] memory gradients)
-    {
+    function _commonCategoryGradients() private pure returns (StakeSVG.Gradient[] memory gradients) {
         StakeSVG.Color[] memory colors = new StakeSVG.Color[](3);
-        colors[0] = StakeSVG.Color({ h: 50, s: 10, l: 36, a: 1, off: 0 });
-        colors[1] = StakeSVG.Color({ h: 50, s: 10, l: 12, a: 1, off: 50 });
-        colors[2] = StakeSVG.Color({ h: 50, s: 10, l: 5, a: 1, off: 100 });
+        colors[0] = StakeSVG.Color({h: 50, s: 10, l: 36, a: 1, off: 0});
+        colors[1] = StakeSVG.Color({h: 50, s: 10, l: 12, a: 1, off: 50});
+        colors[2] = StakeSVG.Color({h: 50, s: 10, l: 5, a: 1, off: 100});
         gradients = new StakeSVG.Gradient[](1);
-        gradients[0] = StakeSVG.Gradient({
-            colors: colors,
-            id: 0,
-            coords: [uint256(50), 0, 50, 100]
-        });
+        gradients[0] = StakeSVG.Gradient({colors: colors, id: 0, coords: [uint256(50), 0, 50, 100]});
     }
 
     // PUBLIC INTERFACE
@@ -46,11 +38,7 @@ library StakeMetadata {
     /**
         @dev public interface to generate SVG image based on XENFT params
      */
-    function svgData(
-        uint256 tokenId,
-        uint256 info,
-        address token
-    ) external view returns (bytes memory) {
+    function svgData(uint256 tokenId, uint256 info, address token) external view returns (bytes memory) {
         string memory symbol = IERC20Metadata(token).symbol();
         StakeSVG.SvgParams memory params = StakeSVG.SvgParams({
             symbol: symbol,
@@ -66,10 +54,7 @@ library StakeMetadata {
         return StakeSVG.image(params, _commonCategoryGradients());
     }
 
-    function _attr1(
-        uint256 amount,
-        uint256 apy
-    ) private pure returns (bytes memory) {
+    function _attr1(uint256 amount, uint256 apy) private pure returns (bytes memory) {
         return
             abi.encodePacked(
                 '{"trait_type":"Amount","value":"',
@@ -81,10 +66,7 @@ library StakeMetadata {
             );
     }
 
-    function _attr2(
-        uint256 term,
-        uint256 maturityTs
-    ) private pure returns (bytes memory) {
+    function _attr2(uint256 term, uint256 maturityTs) private pure returns (bytes memory) {
         (uint256 year, string memory month) = DateTime.yearAndMonth(maturityTs);
         return
             abi.encodePacked(
@@ -104,12 +86,7 @@ library StakeMetadata {
     }
 
     function _attr3(uint256 rarityScore, uint256) private pure returns (bytes memory) {
-        return
-            abi.encodePacked(
-                '{"trait_type":"Rarity","value":"',
-                rarityScore.toString(),
-                '"}'
-            );
+        return abi.encodePacked('{"trait_type":"Rarity","value":"', rarityScore.toString(), '"}');
     }
 
     /**
@@ -125,13 +102,7 @@ library StakeMetadata {
             uint256 rarityBits
         ) = StakeInfo.decodeStakeInfo(stakeInfo);
         return
-            abi.encodePacked(
-                "[",
-                _attr1(amount, apy),
-                _attr2(term, maturityTs),
-                _attr3(rarityScore, rarityBits),
-                "]"
-            );
+            abi.encodePacked("[", _attr1(amount, apy), _attr2(term, maturityTs), _attr3(rarityScore, rarityBits), "]");
     }
 
     function formattedString(uint256 n) public pure returns (string memory) {

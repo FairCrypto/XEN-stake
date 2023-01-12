@@ -48,11 +48,7 @@ library BokkyPooBahsDateTimeLibrary {
     //      - 3 * ((year + 4900 + (month - 14) / 12) / 100) / 4
     //      - offset
     // ------------------------------------------------------------------------
-    function _daysFromDate(
-        uint256 year,
-        uint256 month,
-        uint256 day
-    ) private pure returns (uint256 _days) {
+    function _daysFromDate(uint256 year, uint256 month, uint256 day) private pure returns (uint256 _days) {
         require(year >= 1970);
         int256 _year = int256(year);
         int256 _month = int256(month);
@@ -88,15 +84,7 @@ library BokkyPooBahsDateTimeLibrary {
     // month = month + 2 - 12 * L
     // year = 100 * (N - 49) + year + L
     // ------------------------------------------------------------------------
-    function _daysToDate(uint256 _days)
-        private
-        pure
-        returns (
-            uint256 year,
-            uint256 month,
-            uint256 day
-        )
-    {
+    function _daysToDate(uint256 _days) private pure returns (uint256 year, uint256 month, uint256 day) {
         int256 __days = int256(_days);
 
         int256 L = __days + 68569 + _OFFSET19700101;
@@ -115,11 +103,7 @@ library BokkyPooBahsDateTimeLibrary {
         day = uint256(_day);
     }
 
-    function timestampFromDate(
-        uint256 year,
-        uint256 month,
-        uint256 day
-    ) internal pure returns (uint256 timestamp) {
+    function timestampFromDate(uint256 year, uint256 month, uint256 day) internal pure returns (uint256 timestamp) {
         timestamp = _daysFromDate(year, month, day) * _SECONDS_PER_DAY;
     }
 
@@ -141,30 +125,13 @@ library BokkyPooBahsDateTimeLibrary {
             second;
     }
 
-    function timestampToDate(uint256 timestamp)
-        internal
-        pure
-        returns (
-            uint256 year,
-            uint256 month,
-            uint256 day
-        )
-    {
+    function timestampToDate(uint256 timestamp) internal pure returns (uint256 year, uint256 month, uint256 day) {
         (year, month, day) = _daysToDate(timestamp / _SECONDS_PER_DAY);
     }
 
-    function timestampToDateTime(uint256 timestamp)
-        internal
-        pure
-        returns (
-            uint256 year,
-            uint256 month,
-            uint256 day,
-            uint256 hour,
-            uint256 minute,
-            uint256 second
-        )
-    {
+    function timestampToDateTime(
+        uint256 timestamp
+    ) internal pure returns (uint256 year, uint256 month, uint256 day, uint256 hour, uint256 minute, uint256 second) {
         (year, month, day) = _daysToDate(timestamp / _SECONDS_PER_DAY);
         uint256 secs = timestamp % _SECONDS_PER_DAY;
         hour = secs / _SECONDS_PER_HOUR;
@@ -173,11 +140,7 @@ library BokkyPooBahsDateTimeLibrary {
         second = secs % _SECONDS_PER_MINUTE;
     }
 
-    function isValidDate(
-        uint256 year,
-        uint256 month,
-        uint256 day
-    ) internal pure returns (bool valid) {
+    function isValidDate(uint256 year, uint256 month, uint256 day) internal pure returns (bool valid) {
         if (year >= 1970 && month > 0 && month <= 12) {
             uint256 daysInMonth = _getDaysInMonth(year, month);
             if (day > 0 && day <= daysInMonth) {
