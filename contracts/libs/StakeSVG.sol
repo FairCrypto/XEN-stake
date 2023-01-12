@@ -286,10 +286,7 @@ library StakeSVG {
     /**
         @dev internal helper to create 2nd part of metadata section of SVG
      */
-    function meta2(
-        uint256 term,
-        uint256 maturityTs
-    ) internal pure returns (bytes memory) {
+    function meta2(uint256 term, uint256 maturityTs) internal pure returns (bytes memory) {
         bytes memory part3 = abi.encodePacked(
             "<text "
             'x="18%" '
@@ -315,10 +312,7 @@ library StakeSVG {
     /**
         @dev main internal helper to create SVG file representing XENFT
      */
-    function image(
-        SvgParams memory params,
-        Gradient[] memory gradients
-    ) internal pure returns (bytes memory) {
+    function image(SvgParams memory params, Gradient[] memory gradients) internal pure returns (bytes memory) {
         string memory mark = _STAKE;
         bytes memory graphics = abi.encodePacked(defs(gradients[0]), _STYLE, g(gradients.length), _LOGO, mark);
         bytes memory metadata = abi.encodePacked(

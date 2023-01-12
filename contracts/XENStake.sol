@@ -43,7 +43,6 @@ contract XENStake is
     IERC2981, // required to support NFT royalties
     ERC721("XEN Stake", "XENS")
 {
-
     using Strings for uint256;
     using StakeInfo for uint256;
     using MagicNumbers for uint256;
@@ -58,7 +57,6 @@ contract XENStake is
     string public constant AUTHORS = "@MrJackLevin @lbelyaev faircrypto.org";
 
     uint256 public constant ROYALTY_BP = 500;
-
 
     // PUBLIC MUTABLE STATE
 
@@ -85,11 +83,7 @@ contract XENStake is
     // mapping Address => tokenId[]
     mapping(address => uint256[]) private _ownedTokens;
 
-    constructor(
-        address xenCrypto_,
-        address forwarder_,
-        address royaltyReceiver_
-    ) ERC2771Context(forwarder_) {
+    constructor(address xenCrypto_, address forwarder_, address royaltyReceiver_) ERC2771Context(forwarder_) {
         require(xenCrypto_ != address(0), "bad address");
         _original = address(this);
         _deployer = msg.sender;
@@ -105,10 +99,10 @@ contract XENStake is
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC721) returns (bool) {
         return
-        interfaceId == type(IBurnRedeemable).interfaceId ||
-        interfaceId == type(IERC2981).interfaceId ||
-        interfaceId == type(IERC2771).interfaceId ||
-        super.supportsInterface(interfaceId);
+            interfaceId == type(IBurnRedeemable).interfaceId ||
+            interfaceId == type(IERC2981).interfaceId ||
+            interfaceId == type(IERC2771).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     // ERC2771 IMPLEMENTATION
@@ -207,11 +201,7 @@ contract XENStake is
     /**
         @dev overrides OZ ERC-721 before transfer hook to check if there's no blackout period
      */
-    function _beforeTokenTransfer(
-        address from,
-        address,
-        uint256 tokenId
-    ) internal virtual override {
+    function _beforeTokenTransfer(address from, address, uint256 tokenId) internal virtual override {
         if (from != address(0)) {
             uint256 maturityTs = StakeInfo.getMaturityTs(stakeInfo[tokenId]);
             uint256 delta = maturityTs > block.timestamp ? maturityTs - block.timestamp : block.timestamp - maturityTs;
@@ -222,11 +212,7 @@ contract XENStake is
     /**
         @dev overrides OZ ERC-721 after transfer hook to allow token enumeration for owner
      */
-    function _afterTokenTransfer(
-        address from,
-        address to,
-        uint256 tokenId
-    ) internal virtual override {
+    function _afterTokenTransfer(address from, address to, uint256 tokenId) internal virtual override {
         _ownedTokens[from].removeItem(tokenId);
         _ownedTokens[to].addItem(tokenId);
     }
@@ -269,22 +255,14 @@ contract XENStake is
     /**
         @dev implements `transferFrom` with additional approved Operator checking
      */
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public override onlyAllowedOperator(from) {
+    function transferFrom(address from, address to, uint256 tokenId) public override onlyAllowedOperator(from) {
         super.transferFrom(from, to, tokenId);
     }
 
     /**
         @dev implements `safeTransferFrom` with additional approved Operator checking
      */
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public override onlyAllowedOperator(from) {
+    function safeTransferFrom(address from, address to, uint256 tokenId) public override onlyAllowedOperator(from) {
         super.safeTransferFrom(from, to, tokenId);
     }
 
@@ -341,25 +319,27 @@ contract XENStake is
     /**
         @dev internal torrent interface. composes StakeInfo
      */
-    function _stakeInfo(address proxy, uint256 tokenId, uint256 amount, uint256 term)
-        private
-        view
-        returns (uint256 info)
-    {
-        ( , uint256 maturityTs, , uint256 apy) = xenCrypto.userStakes(proxy);
+    function _stakeInfo(
+        address proxy,
+        uint256 tokenId,
+        uint256 amount,
+        uint256 term
+    ) private view returns (uint256 info) {
+        (, uint256 maturityTs, , uint256 apy) = xenCrypto.userStakes(proxy);
         (uint256 rarityScore, uint256 rarityBits) = _calcRarity(tokenId);
-        info = StakeInfo.encodeStakeInfo(term, maturityTs, amount/10**18, apy, rarityScore, rarityBits);
+        info = StakeInfo.encodeStakeInfo(term, maturityTs, amount / 10 ** 18, apy, rarityScore, rarityBits);
     }
 
     /**
         @dev internal helper. Creates bytecode for minimal proxy contract
      */
     function _bytecode() private view returns (bytes memory) {
-        return bytes.concat(
-            bytes20(0x3D602d80600A3D3981F3363d3d373d3D3D363d73),
-            bytes20(address(this)),
-            bytes15(0x5af43d82803e903d91602b57fd5bf3)
-        );
+        return
+            bytes.concat(
+                bytes20(0x3D602d80600A3D3981F3363d3d373d3D3D363d73),
+                bytes20(address(this)),
+                bytes15(0x5af43d82803e903d91602b57fd5bf3)
+            );
     }
 
     /**
@@ -459,5 +439,4 @@ contract XENStake is
         emit EndStake(_msgSender(), tokenId);
         // _tokenId = _NOT_USED;
     }
-
 }
