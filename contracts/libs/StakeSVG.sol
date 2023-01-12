@@ -3,7 +3,6 @@ pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "./DateTime.sol";
-import "./StringData.sol";
 import "./FormattedStrings.sol";
 
 /*

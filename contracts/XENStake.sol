@@ -72,12 +72,6 @@ contract XENStake is
 
     // pointer to XEN Crypto contract
     XENCrypto public immutable xenCrypto;
-    // genesisTs for the contract
-    // TODO: do we need it ???
-    uint256 public immutable genesisTs;
-    // start of operations block number
-    // TODO: do we need it ???
-    uint256 public immutable startBlockNumber;
 
     // PRIVATE STATE
 
@@ -93,7 +87,6 @@ contract XENStake is
 
     constructor(
         address xenCrypto_,
-        uint256 startBlockNumber_,
         address forwarder_,
         address royaltyReceiver_
     ) ERC2771Context(forwarder_) {
@@ -101,8 +94,6 @@ contract XENStake is
         _original = address(this);
         _deployer = msg.sender;
         _royaltyReceiver = royaltyReceiver_ == address(0) ? msg.sender : royaltyReceiver_;
-        startBlockNumber = startBlockNumber_;
-        genesisTs = block.timestamp;
         xenCrypto = XENCrypto(xenCrypto_);
     }
 
@@ -361,14 +352,21 @@ contract XENStake is
     }
 
     /**
-        @dev internal torrent interface. initiates Stake Operation
+        @dev internal helper. Creates bytecode for minimal proxy contract
      */
-    function _createStake(uint256 amount, uint256 term, uint256 tokenId) private {
-        bytes memory bytecode = bytes.concat(
+    function _bytecode() private view returns (bytes memory) {
+        return bytes.concat(
             bytes20(0x3D602d80600A3D3981F3363d3d373d3D3D363d73),
             bytes20(address(this)),
             bytes15(0x5af43d82803e903d91602b57fd5bf3)
         );
+    }
+
+    /**
+        @dev internal torrent interface. initiates Stake Operation
+     */
+    function _createStake(uint256 amount, uint256 term, uint256 tokenId) private {
+        bytes memory bytecode = _bytecode();
         bytes memory callData = abi.encodeWithSignature("callStake(uint256,uint256)", amount, term);
         address proxy;
         bool succeeded;
@@ -390,11 +388,7 @@ contract XENStake is
         @dev internal torrent interface. initiates Stake Operation
      */
     function _endStake(uint256 tokenId) private {
-        bytes memory bytecode = bytes.concat(
-            bytes20(0x3D602d80600A3D3981F3363d3d373d3D3D363d73),
-            bytes20(address(this)),
-            bytes15(0x5af43d82803e903d91602b57fd5bf3)
-        );
+        bytes memory bytecode = _bytecode();
         bytes memory callData = abi.encodeWithSignature("callWithdraw()");
         bytes memory callData1 = abi.encodeWithSignature("callTransfer(address)", _msgSender());
         bytes memory callData2 = abi.encodeWithSignature("powerDown()");

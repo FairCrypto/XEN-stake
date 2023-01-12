@@ -42,7 +42,6 @@ module.exports = async function (deployer, network) {
         await deployer.deploy(
             XENStake,
             xenContractAddress,
-            startBlock,
             forwarder,
             royaltyReceiver
         );
@@ -52,15 +51,10 @@ module.exports = async function (deployer, network) {
         await deployer.deploy(
             XENStake,
             xenContract.address,
-            startBlock,
             forwarder,
             royaltyReceiver
         );
     }
     if (network === 'test') {
-        // const xenftAddress = XENStake.address;
-        // const xenCryptoAddress = XENCrypto.address;
-        // console.log(xenftAddress);
-        // await deployer.deploy(TestBulkMinter, xenCryptoAddress, xenftAddress);
     }
 };

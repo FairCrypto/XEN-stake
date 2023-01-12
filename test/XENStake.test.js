@@ -75,20 +75,6 @@ contract("XEN Stake", async accounts => {
         assert.ok(await token.getCurrentMaxTerm().then(_ => _.toNumber()) === expectedCurrentMaxTerm);
     })
 
-    /*
-    it("Should reject createStake transaction submitted before start block", async () => {
-        assert.ok(currentBlock <= startBlock);
-        assert.rejects(() => xenStake.bulkClaimRank(1, 1, { from: accounts[0] }), 'XENFT: Not active yet');
-        const blockDelta = startBlock - currentBlock + 1;
-        const blocks = Array(blockDelta).fill(null);
-        for await (const _ of blocks) {
-            await timeMachine.advanceBlock();
-        }
-        currentBlock = await web3.eth.getBlockNumber();
-        assert.ok(currentBlock > startBlock);
-    });
-     */
-
     it("Should reject bulkClaimRank transaction with incorrect count OR term", async () => {
         assert.rejects(() => xenStake.createStake(0, term, { from: accounts[0] }));
         assert.rejects(() => xenStake.createStake(amount, 0, { from: accounts[0] }));
@@ -148,6 +134,20 @@ contract("XEN Stake", async accounts => {
         assert.ok(decodedImage.startsWith('<svg'));
         assert.ok(decodedImage.endsWith('</svg>'));
         extraPrint === '2' && console.log(decodedImage);
+    })
+
+    it("Should allow to perform another createStake operation with correct params and approval", async () => {
+        xenBalance = await token.balanceOf(accounts[1], { from: accounts[1] }).then(toBigInt);
+        assert.ok(xenBalance > amount)
+        await assert.doesNotReject(() => token.approve(xenStake.address, amount, { from: accounts[1] }));
+        const res = await xenStake.createStake(amount, term, { from: accounts[1] });
+        const { gasUsed } = res.receipt;
+        const { tokenId: newTokenId, amount: expectedAmount, term: expectedTerm } = res.logs[1].args;
+        parseInt(extraPrint || '0') > 0 && console.log('tokenId', newTokenId.toNumber(), 'gas used', gasUsed);
+        assert.ok(newTokenId.toNumber() === tokenId + 1);
+        assert.ok(BigInt(expectedAmount.toString()) === amount);
+        assert.ok(expectedTerm.toNumber() === term);
+        // tokenId = newTokenId.toNumber();
     })
 
     it("Should reject to perform endStake operation before maturityDate", async () => {
