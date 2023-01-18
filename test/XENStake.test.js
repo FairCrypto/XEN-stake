@@ -5,6 +5,8 @@ const assert = require('assert');
 //const { Web3Provider } = require('@ethersproject/providers');
 const timeMachine = require('ganache-time-traveler');
 const {toBigInt} = require("../src/utils");
+const {Contract} = require("ethers");
+const {Web3Provider} = require("@ethersproject/providers");
 
 const Numbers = artifacts.require("MagicNumbers");
 const XENCrypto = artifacts.require("XENCrypto");
@@ -34,6 +36,8 @@ contract("XEN Stake", async accounts => {
     let genesisTs = 0;
     let tokenId;
     let currentBlock;
+    let vsu;
+
     // const startBlock = 0;
     const t0days = 100;
     const term = 365;
@@ -75,12 +79,12 @@ contract("XEN Stake", async accounts => {
         assert.ok(await token.getCurrentMaxTerm().then(_ => _.toNumber()) === expectedCurrentMaxTerm);
     })
 
-    it("Should reject bulkClaimRank transaction with incorrect count OR term", async () => {
+    it("Should reject createStake transaction with incorrect amount OR term", async () => {
         assert.rejects(() => xenStake.createStake(0, term, { from: accounts[0] }));
         assert.rejects(() => xenStake.createStake(amount, 0, { from: accounts[0] }));
     })
 
-    it("Should obtain initial XEN balance via regular minting", async () => {
+    it("Should allow to obtain initial XEN balance via regular minting", async () => {
         await assert.doesNotReject(() => token.claimRank(t0days, { from: accounts[1] }));
         await timeMachine.advanceTime(t0days * 24 * 3600 + 3600);
         await timeMachine.advanceBlock();
@@ -141,13 +145,52 @@ contract("XEN Stake", async accounts => {
         assert.ok(xenBalance > amount)
         await assert.doesNotReject(() => token.approve(xenStake.address, amount, { from: accounts[1] }));
         const res = await xenStake.createStake(amount, term, { from: accounts[1] });
-        const { gasUsed } = res.receipt;
+        const { gasUsed, rawLogs } = res.receipt;
         const { tokenId: newTokenId, amount: expectedAmount, term: expectedTerm } = res.logs[1].args;
+
         parseInt(extraPrint || '0') > 0 && console.log('tokenId', newTokenId.toNumber(), 'gas used', gasUsed);
         assert.ok(newTokenId.toNumber() === tokenId + 1);
         assert.ok(BigInt(expectedAmount.toString()) === amount);
         assert.ok(expectedTerm.toNumber() === term);
         // tokenId = newTokenId.toNumber();
+
+        vsu = rawLogs[1]?.topics[2]?.replace('000000000000000000000000', '');
+        assert.ok(vsu);
+        // console.log(vsu);
+    })
+
+    it('User shall not be able to execute VSU txs directly', async () => {
+        const provider = new Web3Provider(web3.currentProvider);
+        const vsu0 = new Contract(vsu, xenStake.abi, provider.getSigner(1));
+
+        assert.ok(await vsu0.xenCrypto() === xenCryptoAddress);
+        assert.ok(await vsu0.name() === '');
+        assert.ok(await vsu0.symbol() === '');
+        assert.ok(await vsu0.owner() === accounts[0]);
+        assert.ok(await vsu0.tokenIdCounter().then(_ => _.toNumber()) === 0);
+        await assert.rejects(() => vsu0.callStake(1, 1, { gasLimit: 200_000 }).then(_ => _.wait()));
+        await assert.rejects(() => vsu0.callWithdraw(tokenId + 1, { gasLimit: 100_000 }).then(_ => _.wait()));
+        await assert.rejects(() => vsu0.powerDown().then(_ => _.wait()));
+        await assert.rejects(() => vsu0.callTransfer(accounts[0], { gasLimit: 500_000 }).then(_ => _.wait()));
+    });
+
+    it("Should show correct token balance post XENFTs mints", async () => {
+        const balance = await xenStake.balanceOf(accounts[1], { from: accounts[1] }).then(_ => _.toNumber());
+        assert.ok(balance === 2);
+    })
+
+    it("Should show correct token IDs owned by the user", async () => {
+        const ownedTokens1 = await xenStake.ownedTokens({ from: accounts[1] })
+            .then(tokenIds => tokenIds.map(id => id.toNumber()));
+        assert.ok(ownedTokens1.length === 2);
+        assert.ok(ownedTokens1.includes(tokenId))
+        assert.ok(ownedTokens1.includes(tokenId + 1))
+    })
+
+   it("Should show NO token IDs owned by the non-user", async () => {
+        const ownedTokens0 = await xenStake.ownedTokens({ from: accounts[0] })
+            .then(tokenIds => tokenIds.map(id => id.toNumber()));
+        assert.ok(ownedTokens0.length === 0);
     })
 
     it("Should reject to perform endStake operation before maturityDate", async () => {
@@ -172,6 +215,43 @@ contract("XEN Stake", async accounts => {
         const newBalance = await token.balanceOf(accounts[1], { from: accounts[1] }).then(toBigInt);
         assert.ok(newBalance === xenBalance + amount * 19n / 100n );
     });
+
+    it("Post stake, stakeInfo should return zero for redeemed token Id, and non-zero for active one", async () => {
+        const stakeInfo1 = await xenStake.stakeInfo(tokenId, { from: accounts[1] }).then(toBigInt);
+        assert.ok(stakeInfo1 === 0n);
+        const stakeInfo2 = await xenStake.stakeInfo(tokenId + 1, { from: accounts[1] }).then(toBigInt);
+        assert.ok(stakeInfo2 > 0n);
+    });
+
+    it("Should reject XENFT transfer by a non-owner and no approval", async () => {
+        await assert.rejects(
+            () => xenStake.transferFrom(accounts[2], accounts[3], tokenId + 1),
+            'ERC721: transfer from incorrect owner'
+        );
+    })
+
+    it("Should not allow to transfer XEN Stake XENFT with incorrect or redeemed tokenId", async () => {
+        await assert.rejects(
+            () => xenStake.transferFrom(accounts[1], accounts[2], tokenId, { from: accounts[1] }),
+            'ERC721: invalid token ID'
+        );
+    });
+
+    it("Should not allow to transfer XEN Stake tokenId in the blackout period", async () => {
+        await assert.rejects(
+            () => xenStake.transferFrom(accounts[1], accounts[2], tokenId + 1, { from: accounts[1] }),
+            'XENFT: transfer prohibited in blackout period'
+        );
+    });
+
+    it("Should allow to transfer XEN Stake tokenId after the blackout period", async () => {
+        await timeMachine.advanceTime(7 * 24 * 3600 + 24 * 3600 + 3600);
+        await timeMachine.advanceBlock();
+        await assert.doesNotReject(
+            () => xenStake.transferFrom(accounts[1], accounts[2], tokenId + 1, { from: accounts[1] }),
+        );
+        // console.log(res);
+    })
 
     it("Should access deployed MagicNumbers library", async () => {
         assert.ok(Numbers.deployed());
