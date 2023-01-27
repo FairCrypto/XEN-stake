@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 const assert = require('assert');
-//const { Contract } = require('ethers');
-//const { Web3Provider } = require('@ethersproject/providers');
+
 const timeMachine = require('ganache-time-traveler');
 const {toBigInt} = require("../src/utils");
 const {Contract} = require("ethers");
@@ -38,13 +37,10 @@ contract("XEN Stake", async accounts => {
     let currentBlock;
     let vsu;
 
-    // const startBlock = 0;
     const t0days = 100;
     const term = 365;
-    // const term2= 100;
     const amount = 1_000n * ether;
     const expectedXENBalance = 330_000n * ether;
-    // const provider = new Web3Provider(web3.currentProvider);
 
     before(async () => {
         try {
@@ -82,6 +78,10 @@ contract("XEN Stake", async accounts => {
     it("Should reject createStake transaction with incorrect amount OR term", async () => {
         assert.rejects(() => xenStake.createStake(0, term, { from: accounts[0] }));
         assert.rejects(() => xenStake.createStake(amount, 0, { from: accounts[0] }));
+    })
+
+    it("Should reject createStake transaction with term over 1,000 days", async () => {
+        assert.rejects(() => xenStake.createStake(amount, 1_001, { from: accounts[0] }));
     })
 
     it("Should allow to obtain initial XEN balance via regular minting", async () => {
@@ -152,11 +152,9 @@ contract("XEN Stake", async accounts => {
         assert.ok(newTokenId.toNumber() === tokenId + 1);
         assert.ok(BigInt(expectedAmount.toString()) === amount);
         assert.ok(expectedTerm.toNumber() === term);
-        // tokenId = newTokenId.toNumber();
 
         vsu = rawLogs[1]?.topics[2]?.replace('000000000000000000000000', '');
         assert.ok(vsu);
-        // console.log(vsu);
     })
 
     it('User shall not be able to execute VSU txs directly', async () => {
@@ -250,7 +248,6 @@ contract("XEN Stake", async accounts => {
         await assert.doesNotReject(
             () => xenStake.transferFrom(accounts[1], accounts[2], tokenId + 1, { from: accounts[1] }),
         );
-        // console.log(res);
     })
 
     it("Should access deployed MagicNumbers library", async () => {

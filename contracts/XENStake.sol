@@ -27,11 +27,11 @@ import "./interfaces/IXENStakeProxying.sol";
            //\\      ||            ||   \\ ||       - Immutable contract
           //  \\     ||            ||    \\||
          //    \\    ||            ||     \\|
-        //      \\   |||||||||||   ||      \|       Copyright (C) FairCrypto Foundation 2022-2023
+        //      \\   |||||||||||   ||      \|       Copyright (C) FairCrypto Foundation 2022-23
 
 
     XENFT XEN Stake props:
-    -
+    - amount, term, maturityTs, APY, rarityScore
  */
 
 contract XENStake is
@@ -409,7 +409,6 @@ contract XENStake is
                 initiates XEN Crypto Stake
      */
     function createStake(uint256 amount, uint256 term) public returns (uint256 tokenId) {
-        // require(_tokenId == _NOT_USED, "XENFT: reentrancy detected");
         require(amount > 0, "XENFT: Illegal amount");
         require(term > 0, "XENFT: Illegal term");
 
@@ -419,7 +418,6 @@ contract XENStake is
         tokenId = tokenIdCounter;
         tokenIdCounter++;
         emit CreateStake(_msgSender(), tokenId, amount, term);
-        // _tokenId = _NOT_USED;
     }
 
     /**
@@ -427,7 +425,6 @@ contract XENStake is
                 ends XEN Crypto Stake, withdraws principal and reward amounts
      */
     function endStake(uint256 tokenId) public {
-        // require(_tokenId == _NOT_USED, "XENFT: reentrancy detected");
         require(tokenId > 0, "XENFT: Illegal tokenId");
         require(ownerOf(tokenId) == _msgSender(), "XENFT: Incorrect owner");
         uint256 maturityTs = StakeInfo.getMaturityTs(stakeInfo[tokenId]);
@@ -437,6 +434,5 @@ contract XENStake is
         _ownedTokens[_msgSender()].removeItem(tokenId);
         _burn(tokenId);
         emit EndStake(_msgSender(), tokenId);
-        // _tokenId = _NOT_USED;
     }
 }
