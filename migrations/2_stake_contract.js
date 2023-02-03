@@ -3,7 +3,6 @@ const XENCrypto = artifacts.require("XENCrypto");
 const MagicNumbers = artifacts.require("MagicNumbers");
 
 const DateTime = artifacts.require("DateTime");
-// const StringData = artifacts.require("StringData");
 const StakeInfo = artifacts.require("StakeInfo");
 const StakeMetadata = artifacts.require("StakeMetadata");
 
