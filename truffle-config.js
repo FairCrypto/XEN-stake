@@ -9,6 +9,7 @@ const privKeysRinkeby = [ liveNetworkPK ]
 const etherscanApiKey = process.env.ETHERS_SCAN_API_KEY || ''
 const polygonApiKey = process.env.POLYGON_SCAN_API_KEY || ''
 const bscApiKey = process.env.BSC_SCAN_API_KEY || ''
+const snowtraceApiKey = process.env.SNOWTRACE_API_KEY || ''
 
 module.exports = {
   networks: {
@@ -95,6 +96,12 @@ module.exports = {
       networkCheckTimeout: 999999
       //websockets: true
     },
+    dashboard: {
+      networkCheckTimeout: 30000,
+      confirmations: 2,
+      timeoutBlocks: 200,
+      pollingInterval: 1000
+    }
   },
   mocha: {
     timeout: 999_000
@@ -114,10 +121,14 @@ module.exports = {
   db: {
     enabled: false
   },
+  dashboard: {
+    port: 24012,
+  },
   plugins: ['truffle-plugin-verify'],
   api_keys: {
     etherscan: etherscanApiKey,
     bscscan: bscApiKey,
-    polygonscan: polygonApiKey
+    polygonscan: polygonApiKey,
+    snowtrace: snowtraceApiKey
   }
 };
