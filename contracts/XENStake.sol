@@ -41,7 +41,7 @@ contract XENStake is
     IBurnableToken,
     ERC2771Context, // required to support meta transactions
     IERC2981, // required to support NFT royalties
-    ERC721("XEN Stake", "XENS")
+    ERC721("XEN Stake", "coXENS")
 {
     using Strings for uint256;
     using StakeInfo for uint256;

@@ -95,6 +95,21 @@ module.exports = {
       networkCheckTimeout: 999999
       //websockets: true
     },
+    okx: {
+      provider: () => new HDWalletProvider({
+        privateKeys: privKeysRinkeby,
+        providerOrUrl: `https://exchainrpc.okex.org\t`,
+        pollingInterval: 56000
+      }),
+      network_id: 66,
+      confirmations: 2,
+      timeoutBlocks: 200,
+      pollingInterval: 1000,
+      skipDryRun: true,
+      from: '0x6B889Dcfad1a6ddf7dE3bC9417F5F51128efc964',
+      networkCheckTimeout: 999999
+      //websockets: true
+    },
   },
   mocha: {
     timeout: 999_000
