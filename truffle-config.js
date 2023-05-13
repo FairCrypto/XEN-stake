@@ -57,10 +57,10 @@ module.exports = {
     pulsechain_testnet: {
       provider: () => new HDWalletProvider({
         privateKeys: privKeysRinkeby,
-        providerOrUrl: `https://rpc.v2b.testnet.pulsechain.com`,
+        providerOrUrl: `https://rpc.v3.testnet.pulsechain.com`,
         pollingInterval: 56000
       }),
-      network_id: 941,
+      network_id: 942,
       confirmations: 2,
       timeoutBlocks: 100,
       skipDryRun: true,
