@@ -96,6 +96,20 @@ module.exports = {
       networkCheckTimeout: 999999
       //websockets: true
     },
+    base: {
+      provider: () => new HDWalletProvider({
+        privateKeys: privKeysRinkeby,
+        providerOrUrl: `https://mainnet.base.org`,
+        // providerOrUrl: `wss://:${infuraSecret}@goerli.infura.io/ws/v3/${infuraKey}`,
+        pollingInterval: 56000
+      }),
+      network_id: 8453,
+      confirmations: 2,
+      timeoutBlocks: 100,
+      skipDryRun: true,
+      // from: '0x6B889Dcfad1a6ddf7dE3bC9417F5F51128efc964',
+      networkCheckTimeout: 999999
+    },
     dashboard: {
       networkCheckTimeout: 30000,
       confirmations: 2,
