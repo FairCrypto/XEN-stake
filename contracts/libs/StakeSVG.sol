@@ -2,8 +2,8 @@
 pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "./DateTime.sol";
-import "./FormattedStrings.sol";
+import "@faircrypto/xen-libs/contracts/DateTime.sol";
+import "@faircrypto/xen-libs/contracts/FormattedStrings.sol";
 
 /*
     @dev        Library to create SVG image for XENFT metadata

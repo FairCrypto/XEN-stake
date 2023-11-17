@@ -9,11 +9,11 @@ import "@faircrypto/xen-crypto/contracts/XENCrypto.sol";
 import "@faircrypto/xen-crypto/contracts/interfaces/IBurnableToken.sol";
 import "@faircrypto/magic-numbers/contracts/MagicNumbers.sol";
 import "operator-filter-registry/src/DefaultOperatorFilterer.sol";
-import "./libs/ERC2771Context.sol";
-import "./interfaces/IERC2771.sol";
+import "@faircrypto/xen-libs/contracts/ERC2771Context.sol";
+import "@faircrypto/xen-libs/contracts/interfaces/IERC2771.sol";
+import "@faircrypto/xen-libs/contracts/Array.sol";
 import "./libs/StakeInfo.sol";
 import "./libs/StakeMetadata.sol";
-import "./libs/Array.sol";
 import "./interfaces/IXENStake.sol";
 import "./interfaces/IXENStakeProxying.sol";
 

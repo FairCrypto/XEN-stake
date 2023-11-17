@@ -3,10 +3,10 @@ pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "./StakeInfo.sol";
-import "./DateTime.sol";
-import "./FormattedStrings.sol";
+import "@faircrypto/xen-libs/contracts/DateTime.sol";
+import "@faircrypto/xen-libs/contracts/FormattedStrings.sol";
 import "./StakeSVG.sol";
+import "./StakeInfo.sol";
 
 /**
     @dev Library contains methods to generate on-chain NFT metadata
